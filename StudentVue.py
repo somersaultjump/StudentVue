@@ -5,6 +5,7 @@ from studentvue import StudentVue
 parser = argparse.ArgumentParser(description='StudentVUE interface script.')
 parser.add_argument("-g","--grades", help="Returns grades for each class.", action="store_true")
 parser.add_argument("-a","--attendance", help="Returns attendance report.", action="store_true")
+parser.add_argument("-s","--studentid", help="Provide student ID to avoid being prompted.")
 parser.add_argument("--debug",
     help="Show raw payload from StudentVUE. Requires record flag (-a, -g, etc.)",
     action="store_true")
@@ -12,8 +13,12 @@ args = parser.parse_args()
 
 def get_student_id():
     """Get student ID from user."""
-    user = input("Enter student ID: \n")
-    passw = user
+    if args.studentid:
+        user = args.studentid
+        passw = user
+    else:
+        user = input("Enter student ID: \n")
+        passw = user
     domain = 'musd20.apscc.org'
     connection = StudentVue(user, passw, domain)
     return connection
@@ -22,7 +27,12 @@ def get_grades(svconnect):
     """Retrieve student grades"""
     print('Retrieving grades from StudentVUE...')
     svgrade = svconnect.get_gradebook()
-    courses = svgrade['Gradebook']['Courses']['Course']
+    try:
+        courses = svgrade['Gradebook']['Courses']['Course']
+    except Exception as exc:
+        raise SystemExit('\nERROR: Unable to obtain grades.\n'
+            '\t- is the student ID correct?\n'
+            '\t- is the domain/url correct?') from exc
     all_grades = []
 
     for each_class in courses:
@@ -41,7 +51,12 @@ def get_attendance(svconnect):
     """Retrieve student attendance records"""
     print('Retrieving attendance records from StudentVUE...')
     svattend = svconnect.get_attendance()
-    missed_days = svattend['Attendance']['Absences']['Absence']
+    try:
+        missed_days = svattend['Attendance']['Absences']['Absence']
+    except Exception as exc:
+        raise SystemExit('\nERROR: Unable to retreive attendance records.\n'
+            '\t- is the student ID correct?\n'
+            '\t- is the domain/url correct?') from exc
     all_absenses = []
 
     for each_date in missed_days:
