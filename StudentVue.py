@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser(description='StudentVUE interface script.')
 parser.add_argument("-g","--grades", help="Returns grades for each class.", action="store_true")
 parser.add_argument("-a","--attendance", help="Returns attendance report.", action="store_true")
 parser.add_argument("-s","--studentid", help="Provide student ID to avoid being prompted.")
+parser.add_argument("-d","--district", help="Provide district URL to connect to.", required=True)
 parser.add_argument("--debug",
     help="Show raw payload from StudentVUE. Requires record flag (-a, -g, etc.)",
     action="store_true")
@@ -19,7 +20,7 @@ def get_student_id():
     else:
         user = input("Enter student ID: \n")
         passw = user
-    domain = 'musd20.apscc.org'
+    domain = args.district
     connection = StudentVue(user, passw, domain)
     return connection
 
