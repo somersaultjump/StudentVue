@@ -5,21 +5,24 @@ from studentvue import StudentVue
 parser = argparse.ArgumentParser(description='StudentVUE interface script.')
 parser.add_argument("-g","--grades", help="Returns grades for each class.", action="store_true")
 parser.add_argument("-a","--attendance", help="Returns attendance report.", action="store_true")
-parser.add_argument("-s","--studentid", help="Provide student ID to avoid being prompted.")
+parser.add_argument("-u","--userid", help="Provide user ID.")
+parser.add_argument("-p","--password", help="Provide password.")
 parser.add_argument("-d","--district", help="Provide district URL to connect to.", required=True)
 parser.add_argument("--debug",
     help="Show raw payload from StudentVUE. Requires record flag (-a, -g, etc.)",
     action="store_true")
 args = parser.parse_args()
 
-def get_student_id():
-    """Get student ID from user."""
-    if args.studentid:
-        user = args.studentid
-        passw = user
+def get_student_credentials():
+    """Get user ID from user."""
+    if args.userid:
+        user = args.userid
     else:
-        user = input("Enter student ID: \n")
-        passw = user
+        user = input("Enter user ID: \n")
+    if args.password:
+        passw = args.password
+    else:
+        passw = input("Enter password: \n")
     domain = args.district
     connection = StudentVue(user, passw, domain)
     return connection
@@ -32,7 +35,7 @@ def get_grades(svconnect):
         courses = svgrade['Gradebook']['Courses']['Course']
     except Exception as exc:
         raise SystemExit('\nERROR: Unable to obtain grades.\n'
-            '\t- is the student ID correct?\n'
+            '\t- is the user ID and/or password correct?\n'
             '\t- is the domain/url correct?') from exc
     all_grades = []
 
@@ -56,7 +59,7 @@ def get_attendance(svconnect):
         missed_days = svattend['Attendance']['Absences']['Absence']
     except Exception as exc:
         raise SystemExit('\nERROR: Unable to retreive attendance records.\n'
-            '\t- is the student ID correct?\n'
+            '\t- is the user ID and/or password correct?\n'
             '\t- is the domain/url correct?') from exc
     all_absenses = []
 
@@ -84,13 +87,13 @@ def get_attendance(svconnect):
 
 if (args.debug and args.grades):
     print('DEBUG: Get raw grade payload from StudentVUE...')
-    gb = (get_student_id()).get_gradebook()
+    gb = (get_student_credentials()).get_gradebook()
     print(json.dumps(gb, indent=4))
     raise SystemExit()
 
 if (args.debug and args.attendance):
     print('DEBUG: Get raw attendance payload from StudentVUE...')
-    attend = (get_student_id()).get_attendance()
+    attend = (get_student_credentials()).get_attendance()
     print(json.dumps(attend, indent=4))
     raise SystemExit()
 
@@ -98,9 +101,9 @@ if args.debug:
     raise SystemExit("You need to provice an argument to debug; -a or -g")
 
 if args.grades:
-    get_grades(get_student_id())
+    get_grades(get_student_credentials())
     raise SystemExit()
 
 if args.attendance:
-    get_attendance(get_student_id())
+    get_attendance(get_student_credentials())
     raise SystemExit()
